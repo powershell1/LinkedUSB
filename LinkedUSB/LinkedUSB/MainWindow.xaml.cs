@@ -26,10 +26,12 @@ namespace LinkedUSB
     {
         public static WSReceiver wsReceiver;
 
+
         public MainWindow()
         {
             this.InitializeComponent();
             this.Closed += onAppClosing;
+
         }
 
         private void onAppClosing(object sender, WindowEventArgs args)

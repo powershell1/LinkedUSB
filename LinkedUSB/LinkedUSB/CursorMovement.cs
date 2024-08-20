@@ -2,6 +2,7 @@ using Network;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 public class CursorHooking
 {
@@ -31,13 +32,37 @@ public class CursorHooking
 
     private static LowLevelMouseProc _proc = HookCallback;
     private static IntPtr _hookID = IntPtr.Zero;
+
+    private static Thread broadcastThread;
+    private static DateTime lastBroadcast = DateTime.Now;
+
+    private static byte[] broadcastByte = { 0x00, 0x00, 0x00, 0x00 };
+
+    private static void broadcastRT()
+    {
+        Debug.WriteLine("broadcastRT");
+        while (true)
+        {
+            DateTime now = DateTime.Now;
+            long space = now.Ticks - lastBroadcast.Ticks;
+            if (space > 1500000)
+            {
+                WSService.wssv.WebSocketServices["/receiver"].Sessions.Broadcast(broadcastByte);
+                lastBroadcast = now;
+            }
+        }
+    }
+
     public static void SetMouseHook()
     {
         _hookID = SetHook(_proc);
+        broadcastThread = new Thread(broadcastRT);
+        broadcastThread.Start();
     }
 
     public static void RemoveMouseHook()
     {
+        broadcastThread.Suspend();
         UnhookWindowsHookEx(_hookID);
     }
 
@@ -67,7 +92,7 @@ public class CursorHooking
                 sendBuffer[1] = (byte)((x >> 8) & 0xFF);
                 sendBuffer[2] = (byte)(y & 0xFF);
                 sendBuffer[3] = (byte)((y >> 8) & 0xFF);
-                WSService.wssv.WebSocketServices["/receiver"].Sessions.Broadcast(sendBuffer);
+                broadcastByte = sendBuffer;
                 // Debug.WriteLine(lParam);
                 // Marshal.StructureToPtr(hookStruct, lParam, true);
             }
