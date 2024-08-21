@@ -33,6 +33,9 @@ namespace LinkedUSB
             Thread serverThread = new Thread(StartServerFree);
             serverThread.Start();
             this.InitializeComponent();
+            this.SystemBackdrop = new MicaBackdrop();
+            this.ExtendsContentIntoTitleBar = true;
+            this.Title = "LinkedUSB";
             this.Closed += onAppClosing;
         }
 
@@ -48,12 +51,29 @@ namespace LinkedUSB
             CursorHooking.RemoveMouseHook();
         }
 
-        private void myButton_Click(object sender, RoutedEventArgs e)
+        private async void myButton_Click(object sender, RoutedEventArgs e)
         {
+            var customDialog = new ShowDevices();
+            var dialog = new ContentDialog
+            {
+                Content = customDialog,
+                PrimaryButtonText = "Add Computer",
+                CloseButtonText = "Cancel",
+                XamlRoot = myButton.XamlRoot,
+            };
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                // string inputText = customDialog.InputText;
+                // Handle the input text
+            }
+            /*
             CursorMovement.POINT point = new CursorMovement.POINT { X = 10, Y = 10 };
             CursorMovement.MoveCursor(point);
             new Thread(() => StartClient(MyTextBox.Text)).Start();
             myButton.Content = "Clicked";
+            */
         }
 
         private void StartClient(string ip)

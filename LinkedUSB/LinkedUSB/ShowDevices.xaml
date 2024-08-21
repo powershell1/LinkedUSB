@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="LinkedUSB.ShowDevices"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:LinkedUSB"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <StackPanel Orientation="Horizontal">
+            <FontIcon Glyph="&#xE977;" Margin="0,0,5,0" FontSize="85" Opacity="0.5"/>
+            <StackPanel Orientation="Vertical" Margin="5,0,0,0">
+                <TextBlock Text="Adisorn PC" HorizontalAlignment="Left" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="192.168.1.32" HorizontalAlignment="Left" Style="{StaticResource BodyTextBlockStyle}" Opacity="0.75"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
