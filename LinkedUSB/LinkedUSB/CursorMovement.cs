@@ -33,36 +33,15 @@ public class CursorHooking
     private static LowLevelMouseProc _proc = HookCallback;
     private static IntPtr _hookID = IntPtr.Zero;
 
-    private static Thread broadcastThread;
-    private static DateTime lastBroadcast = DateTime.Now;
-
-    private static byte[] broadcastByte = { 0x00, 0x00, 0x00, 0x00 };
-
-    private static void broadcastRT()
-    {
-        Debug.WriteLine("broadcastRT");
-        while (true)
-        {
-            DateTime now = DateTime.Now;
-            long space = now.Ticks - lastBroadcast.Ticks;
-            if (space > 1500000)
-            {
-                WSService.wssv.WebSocketServices["/receiver"].Sessions.Broadcast(broadcastByte);
-                lastBroadcast = now;
-            }
-        }
-    }
+    public static byte[] broadcastByte = { 0x00, 0x00, 0x00, 0x00 };
 
     public static void SetMouseHook()
     {
         _hookID = SetHook(_proc);
-        broadcastThread = new Thread(broadcastRT);
-        broadcastThread.Start();
     }
 
     public static void RemoveMouseHook()
     {
-        broadcastThread.Suspend();
         UnhookWindowsHookEx(_hookID);
     }
 
@@ -85,8 +64,8 @@ public class CursorHooking
             {
                 // hookStruct.pt.X = 500;
                 // hookStruct.pt.Y = 500;
-                int x = hookStruct.pt.X;
-                int y = hookStruct.pt.Y;
+                ushort x = (ushort) hookStruct.pt.X;
+                ushort y = (ushort) hookStruct.pt.Y;
                 byte[] sendBuffer = new byte[4];
                 sendBuffer[0] = (byte)(x & 0xFF);
                 sendBuffer[1] = (byte)((x >> 8) & 0xFF);

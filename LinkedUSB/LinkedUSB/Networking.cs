@@ -4,8 +4,6 @@ using System.Net.Sockets;
 using System.Net;
 using System.Runtime.ConstrainedExecution;
 using System.Threading;
-using WebSocketSharp;
-using WebSocketSharp.Server;
 using System.IO;
 using System.Threading.Tasks;
 using System;
@@ -16,9 +14,11 @@ namespace Network
     {
         public static int PORT = 13000;
 
-        static void Start()
+        TcpListener server;
+
+        public void Start()
         {
-            TcpListener server = new TcpListener(IPAddress.Any, PORT);
+            server = new TcpListener(IPAddress.Any, PORT);
             server.Start();
             Debug.WriteLine("Server started...");
 
@@ -31,7 +31,12 @@ namespace Network
             }
         }
 
-        static async void HandleClient(object? obj)
+        public void Stop()
+        {
+            server.Stop();
+        }
+
+        private static async void HandleClient(object? obj)
         {
             if (obj is TcpClient client)
             {
@@ -40,17 +45,17 @@ namespace Network
                 {
                     while (client.Connected)
                     {
-                        int x = 500;
-                        int y = 500;
+                        /*
+                        ushort x = 500;
+                        ushort y = 600;
                         byte[] sendBuffer = new byte[4];
                         sendBuffer[0] = (byte)(x & 0xFF);
                         sendBuffer[1] = (byte)((x >> 8) & 0xFF);
                         sendBuffer[2] = (byte)(y & 0xFF);
                         sendBuffer[3] = (byte)((y >> 8) & 0xFF);
-                        await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length);
+                        */
+                        await stream.WriteAsync(CursorHooking.broadcastByte, 0, CursorHooking.broadcastByte.Length);
                         await stream.FlushAsync();
-                        // Debug.WriteLine("Data sent...");
-                        // Simulate some delay
                         await Task.Delay(10);
                     }
                 }
@@ -79,85 +84,14 @@ namespace Network
             Debug.WriteLine("Client started...");
             TcpClient client = new TcpClient(ip, TCPServer.PORT);
             NetworkStream stream = client.GetStream();
-
             while (true)
             {
-                byte[] buffer = new byte[8];
+                byte[] buffer = new byte[4];
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                int decodeX = (buffer[1] << 8) | buffer[0];
-                int decodeY = (buffer[3] << 8) | buffer[2];
-                Debug.WriteLine("Received: " + decodeX + ", " + decodeY);
+                ushort decodeX = (ushort)(buffer[0] | (buffer[1] << 8));
+                ushort decodeY = (ushort)(buffer[2] | (buffer[3] << 8));
+                CursorMovement.SetPosition(new CursorMovement.POINT { X = decodeX, Y = decodeY });
             }
-        }
-    }
-
-
-
-    public class Services : WebSocketBehavior
-    {
-        protected override void OnMessage(MessageEventArgs e)
-        {
-            // Debug.WriteLine("Received message: " + e.Data);
-        }
-    }
-
-    public class WSService
-    {
-        public static int PORT = 14850;
-
-        public static WebSocketServer wssv = new WebSocketServer(PORT);
-
-        public static void StartServer()
-        {
-            // Iterate through all WebSocket sessions and send a message to each one
-            wssv.AddWebSocketService<Services>("/receiver");
-            wssv.Start();
-            Debug.WriteLine("Server started on port " + PORT);
-        }
-
-        public static void StopServer()
-        {
-            wssv.Stop();
-            Debug.WriteLine("Server stopped");
-        }
-    }
-
-    public class WSReceiver
-    {
-        public WebSocket ws;
-
-        public WSReceiver(string ip)
-        {
-            string networkAddress = "ws://" + ip + ":" + WSService.PORT + "/receiver";
-            Debug.WriteLine(networkAddress);
-            ws = new WebSocket(networkAddress);
-            ws.OnMessage += onMessage;
-            ws.OnError += Ws_OnError;
-        }
-
-        private void Ws_OnError(object sender, ErrorEventArgs e)
-        {
-            Debug.WriteLine(e.Exception);
-        }
-
-        public void Connect()
-        {
-            ws.Connect();
-        }
-
-        private void onMessage(object sender, MessageEventArgs e)
-        {
-            byte[] receiveBuffer = e.RawData;
-            int decodeX = (receiveBuffer[1] << 8) | receiveBuffer[0];
-            int decodeY = (receiveBuffer[3] << 8) | receiveBuffer[2];
-            CursorMovement.SetPosition(new CursorMovement.POINT { X = decodeX, Y = decodeY });
-            Debug.WriteLine("X: " + decodeX + " Y: " + decodeY);
-
-        }
-
-        public void Close()
-        {
-            ws.Close();
         }
     }
 }

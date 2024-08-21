@@ -10,7 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
@@ -24,19 +26,25 @@ namespace LinkedUSB
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        public static WSReceiver wsReceiver;
-
+        TCPServer server;
 
         public MainWindow()
         {
+            Thread serverThread = new Thread(StartServerFree);
+            serverThread.Start();
             this.InitializeComponent();
             this.Closed += onAppClosing;
+        }
 
+        private void StartServerFree()
+        {
+            server = new TCPServer();
+            server.Start();
         }
 
         private void onAppClosing(object sender, WindowEventArgs args)
         {
-            WSService.StopServer();
+            server.Stop();
             CursorHooking.RemoveMouseHook();
         }
 
@@ -44,12 +52,13 @@ namespace LinkedUSB
         {
             CursorMovement.POINT point = new CursorMovement.POINT { X = 10, Y = 10 };
             CursorMovement.MoveCursor(point);
-            if (wsReceiver == null)
-            {
-                wsReceiver = new WSReceiver(MyTextBox.Text);
-                wsReceiver.Connect();
-            }
+            new Thread(() => StartClient(MyTextBox.Text)).Start();
             myButton.Content = "Clicked";
+        }
+
+        private void StartClient(string ip)
+        {
+            TCPClient.Connect(ip);
         }
     }
 }

@@ -36,7 +36,6 @@ namespace LinkedUSB
         /// </summary>
         public App()
         {
-            WSService.StartServer();
             CursorHooking.SetMouseHook();
             this.InitializeComponent();
         }
