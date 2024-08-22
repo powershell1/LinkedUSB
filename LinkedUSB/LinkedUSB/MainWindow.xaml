@@ -9,6 +9,8 @@
     mc:Ignorable="d">
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <ListBox x:Name="MyListBox" Width="200" Height="200" Margin="10"/>
+        <Button x:Name="RefreshButton" Click="RefreshButton_Click" Content="Refresh" Width="100" Height="30" Margin="10"/>
         <TextBox x:Name="MyTextBox"
                  Width="200"
                  Height="30"
@@ -16,5 +18,5 @@
                  Margin="10"/>
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
     </StackPanel>
-    
+
 </Window>

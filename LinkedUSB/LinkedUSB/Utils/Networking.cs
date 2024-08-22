@@ -9,8 +9,9 @@ using System.Threading.Tasks;
 using System;
 using System.Text;
 using System.Management;
+using LinkedUSB.Utils.Cursor;
 
-namespace Network
+namespace LinkedUSB.Utils.Network
 {
     public class TCPServer
     {
@@ -29,6 +30,7 @@ namespace Network
                 TcpClient client = server.AcceptTcpClient();
                 NetworkStream stream = client.GetStream();
                 Thread clientThread = new Thread(HandleClient);
+                clientThread.IsBackground = true;
                 clientThread.Start(client);
             }
         }
@@ -39,7 +41,6 @@ namespace Network
         }
         private static bool isLaptop()
         {
-
             string query = "SELECT * FROM Win32_Battery";
             using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
             {
