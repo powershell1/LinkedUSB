@@ -21,6 +21,7 @@
     <Manifest Include="$(ApplicationManifest)" />
     <RuntimeHostConfigurationOption Include="System.Runtime.Loader.UseRidGraph" Value="true" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
     <Reference Include="Microsoft.AspNetCore.Mvc.Core">
       <HintPath>C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.aspnetcore.mvc.core\2.0.0\lib\netstandard2.0\Microsoft.AspNetCore.Mvc.Core.dll</HintPath>
     </Reference>

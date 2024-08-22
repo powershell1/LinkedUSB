@@ -7,6 +7,8 @@ using System.Threading;
 using System.IO;
 using System.Threading.Tasks;
 using System;
+using System.Text;
+using System.Management;
 
 namespace Network
 {
@@ -35,43 +37,72 @@ namespace Network
         {
             server.Stop();
         }
+        private static bool isLaptop()
+        {
+
+            string query = "SELECT * FROM Win32_Battery";
+            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+            {
+                using (ManagementObjectCollection results = searcher.Get())
+                {
+                    return results.Count > 0;
+                }
+            }
+        }
 
         private static async void HandleClient(object? obj)
         {
             if (obj is TcpClient client)
             {
                 NetworkStream stream = client.GetStream();
-                try
+                byte[] bytesFrom = new byte[4];
+                await stream.ReadAsync(bytesFrom, 0, 4);
+                if (bytesFrom[0] == 0)
                 {
-                    while (client.Connected)
-                    {
-                        /*
-                        ushort x = 500;
-                        ushort y = 600;
-                        byte[] sendBuffer = new byte[4];
-                        sendBuffer[0] = (byte)(x & 0xFF);
-                        sendBuffer[1] = (byte)((x >> 8) & 0xFF);
-                        sendBuffer[2] = (byte)(y & 0xFF);
-                        sendBuffer[3] = (byte)((y >> 8) & 0xFF);
-                        */
-                        await stream.WriteAsync(CursorHooking.broadcastByte, 0, CursorHooking.broadcastByte.Length);
-                        await stream.FlushAsync();
-                        await Task.Delay(10);
-                    }
-                }
-                catch (IOException ioEx)
-                {
-                    Console.WriteLine($"IOException: {ioEx.Message}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Exception: {ex.Message}");
-                }
-                finally
-                {
+                    string machineName = Environment.MachineName;
+                    byte[] data = new byte[8192];
+                    byte[] messageBytes = Encoding.ASCII.GetBytes(machineName);
+                    data[0] = isLaptop() ? (byte)1 : (byte)0;
+                    Array.Copy(messageBytes, 0, data, 1, messageBytes.Length);
+                    await stream.WriteAsync(data, 0, 8192);
+                    await stream.FlushAsync();
                     stream.Close();
                     client.Close();
-                    Console.WriteLine("Client disconnected...");
+                }
+                else if (bytesFrom[0] == 1)
+                {
+                    try
+                    {
+                        while (client.Connected)
+                        {
+                            /*
+                            ushort x = 500;
+                            ushort y = 600;
+                            byte[] sendBuffer = new byte[4];
+                            sendBuffer[0] = (byte)(x & 0xFF);
+                            sendBuffer[1] = (byte)((x >> 8) & 0xFF);
+                            sendBuffer[2] = (byte)(y & 0xFF);
+                            sendBuffer[3] = (byte)((y >> 8) & 0xFF);
+                            */
+                            await stream.WriteAsync(CursorHooking.broadcastByte, 0, CursorHooking.broadcastByte.Length);
+                            await stream.FlushAsync();
+                            await Task.Delay(10);
+                        }
+                    }
+                    catch (IOException ioEx)
+                    {
+                        Console.WriteLine($"IOException: {ioEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Exception: {ex.Message}");
+                    }
+                    finally
+                    {
+                        stream.Close();
+                        client.Close();
+                        Console.WriteLine("Client disconnected...");
+                    }
                 }
             }
         }
@@ -84,6 +115,8 @@ namespace Network
             Debug.WriteLine("Client started...");
             TcpClient client = new TcpClient(ip, TCPServer.PORT);
             NetworkStream stream = client.GetStream();
+            stream.Write(new byte[] { 0x01, 0x00, 0x00, 0x00 }, 0, 4);
+            stream.Flush();
             while (true)
             {
                 byte[] buffer = new byte[4];
